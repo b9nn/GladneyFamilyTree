@@ -1,0 +1,36 @@
+.photo-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.photo-select-item {
+  position: relative;
+  aspect-ratio: 1;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.photo-select-item:hover {
+  border-color: #0066cc;
+}
+
+.photo-select-item.selected {
+  border-color: #0066cc;
+  border-width: 3px;
+}
+
+.photo-select-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
