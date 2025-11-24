@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import AuthenticatedImage from './AuthenticatedImage'
 import './Modal.css'
 
 function VignetteModal({ vignette, editing, onClose, onSave }) {
@@ -99,8 +100,8 @@ function VignetteModal({ vignette, editing, onClose, onSave }) {
                     className={`photo-select-item ${selectedPhotos.includes(photo.id) ? 'selected' : ''}`}
                     onClick={() => togglePhoto(photo.id)}
                   >
-                    <img
-                      src={`http://localhost:8000/api/photos/${photo.id}`}
+                    <AuthenticatedImage
+                      photoId={photo.id}
                       alt={photo.title || 'Photo'}
                     />
                     <input

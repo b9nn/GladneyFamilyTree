@@ -126,16 +126,44 @@ function Vignettes() {
               }}>
                 {vignette.content || 'No content'}
               </p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <button onClick={() => handleView(vignette)} className="btn btn-primary" style={{ flex: '1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                <button 
+                  onClick={() => handleView(vignette)} 
+                  className="btn btn-primary" 
+                  style={{ 
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.875rem',
+                    flex: 'none'
+                  }}
+                >
                   View
                 </button>
-                <button onClick={() => handleEdit(vignette)} className="btn btn-secondary" style={{ flex: '1' }}>
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(vignette.id)} className="btn btn-danger">
-                  Delete
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => handleEdit(vignette)} 
+                    className="btn btn-secondary" 
+                    style={{ 
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.7rem',
+                      flex: 'none',
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(vignette.id)} 
+                    className="btn btn-danger"
+                    style={{ 
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.7rem',
+                      flex: 'none',
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}

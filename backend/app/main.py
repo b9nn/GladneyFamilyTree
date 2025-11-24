@@ -328,24 +328,52 @@ def upload_audio(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    file_extension = Path(file.filename).suffix
+    print(f"[UPLOAD AUDIO] User: {current_user.username}, Filename: {file.filename}, Content-Type: {file.content_type}")
+    
+    # Handle file extension - use .webm if no extension or if it's a blob
+    file_extension = Path(file.filename).suffix if file.filename else '.webm'
+    if not file_extension or file_extension == '':
+        # Check content type to determine extension
+        if file.content_type and 'webm' in file.content_type:
+            file_extension = '.webm'
+        elif file.content_type and 'mp3' in file.content_type:
+            file_extension = '.mp3'
+        elif file.content_type and 'wav' in file.content_type:
+            file_extension = '.wav'
+        else:
+            file_extension = '.webm'  # Default to webm for browser recordings
+    
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = UPLOAD_DIR / "audio" / unique_filename
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    print(f"[UPLOAD AUDIO] Saving to: {file_path}")
     
-    db_audio = models.AudioRecording(
-        filename=unique_filename,
-        file_path=str(file_path),
-        title=title or file.filename,
-        description=description,
-        author_id=current_user.id,
-    )
-    db.add(db_audio)
-    db.commit()
-    db.refresh(db_audio)
-    return db_audio
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        file_size = file_path.stat().st_size
+        print(f"[UPLOAD AUDIO] File saved successfully, size: {file_size} bytes")
+        
+        db_audio = models.AudioRecording(
+            filename=unique_filename,
+            file_path=str(file_path),
+            title=title or file.filename or f"Recording {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            description=description,
+            author_id=current_user.id,
+        )
+        db.add(db_audio)
+        db.commit()
+        db.refresh(db_audio)
+        
+        print(f"[UPLOAD AUDIO] Database record created, ID: {db_audio.id}")
+        return db_audio
+    except Exception as e:
+        print(f"[UPLOAD AUDIO] Error: {str(e)}")
+        # Clean up file if it was created
+        if file_path.exists():
+            file_path.unlink()
+        raise HTTPException(status_code=500, detail=f"Failed to save audio file: {str(e)}")
 
 
 @app.get("/api/audio", response_model=List[schemas.AudioRecording])
@@ -470,5 +498,23 @@ def get_file(
     ).first()
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file.file_path)
+    
+    file_path = Path(file.file_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    
+    # Determine media type for proper download
+    media_type = file.file_type or "application/octet-stream"
+    
+    # Get the original filename for download
+    download_filename = file.title or file.filename
+    
+    return FileResponse(
+        file.file_path,
+        media_type=media_type,
+        filename=download_filename,
+        headers={
+            "Content-Disposition": f'attachment; filename="{download_filename}"'
+        }
+    )
 

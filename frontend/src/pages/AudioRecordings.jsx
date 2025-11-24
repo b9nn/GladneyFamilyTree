@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { format } from 'date-fns'
+import AuthenticatedAudio from '../components/AuthenticatedAudio'
 import './AudioRecordings.css'
 
 function AudioRecordings() {
@@ -36,23 +37,54 @@ function AudioRecordings() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
       
-      const mediaRecorder = new MediaRecorder(stream)
+      // Use the best available mime type
+      const options = { mimeType: 'audio/webm' }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        // Fallback to default
+        delete options.mimeType
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options)
       mediaRecorderRef.current = mediaRecorder
       
       const chunks = []
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
+        console.log('Data available:', e.data.size, 'bytes')
+        if (e.data && e.data.size > 0) {
           chunks.push(e.data)
         }
       }
       
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' })
-        setAudioBlob(blob)
+        console.log('Recording stopped, chunks:', chunks.length)
+        if (chunks.length > 0) {
+          const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' })
+          console.log('Recording stopped, blob created:', { 
+            size: blob.size, 
+            type: blob.type,
+            chunks: chunks.length 
+          })
+          
+          if (blob.size > 0) {
+            setAudioBlob(blob)
+          } else {
+            console.warn('Blob is empty')
+            alert('Recording appears to be empty. Please try again.')
+          }
+        } else {
+          console.warn('No audio chunks recorded')
+          alert('No audio was recorded. Please try again.')
+        }
         stream.getTracks().forEach(track => track.stop())
       }
       
-      mediaRecorder.start()
+      mediaRecorder.onerror = (e) => {
+        console.error('MediaRecorder error:', e)
+        alert('An error occurred during recording. Please try again.')
+      }
+      
+      // Start recording with timeslice to ensure data is available
+      mediaRecorder.start(100) // Collect data every 100ms
       setIsRecording(true)
       setRecordingTime(0)
       
@@ -67,6 +99,10 @@ function AudioRecordings() {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      // Request final data before stopping
+      if (mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.requestData()
+      }
       mediaRecorderRef.current.stop()
       setIsRecording(false)
       if (intervalRef.current) {
@@ -76,34 +112,48 @@ function AudioRecordings() {
   }
 
   const handleUploadRecording = async () => {
-    if (!audioBlob) return
+    if (!audioBlob) {
+      console.error('No audio blob to upload')
+      return
+    }
 
     const formData = new FormData()
     formData.append('file', audioBlob, `recording-${Date.now()}.webm`)
     formData.append('title', `Recording ${format(new Date(), 'MMM d, yyyy HH:mm')}`)
 
     try {
-      await axios.post('/api/audio', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      console.log('Uploading recording...', { blobSize: audioBlob.size, blobType: audioBlob.type })
+      
+      const response = await axios.post('/api/audio', formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data' 
+        },
       })
 
-      // Clean up blob URL
-      if (audioBlob) {
-        URL.revokeObjectURL(URL.createObjectURL(audioBlob))
-      }
+      console.log('Recording uploaded successfully:', response.data)
 
+      // Clear the audio blob
       setAudioBlob(null)
 
       // Force audio elements to reload by incrementing refresh key
       setRefreshKey(prev => prev + 1)
 
       // Small delay to ensure file is ready on server
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await new Promise(resolve => setTimeout(resolve, 500))
 
-      fetchRecordings()
+      // Refresh the recordings list
+      await fetchRecordings()
+      
+      // Show success message
+      alert('Recording saved successfully!')
     } catch (error) {
       console.error('Failed to upload recording:', error)
-      alert('Failed to upload recording')
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      alert(`Failed to upload recording: ${error.response?.data?.detail || error.message || 'Unknown error'}`)
     }
   }
 
@@ -209,13 +259,33 @@ function AudioRecordings() {
             <div className="recording-preview">
               <audio controls src={URL.createObjectURL(audioBlob)} />
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button onClick={handleUploadRecording} className="btn btn-primary">
+                <button 
+                  onClick={handleUploadRecording} 
+                  className="btn btn-primary"
+                  disabled={!audioBlob || audioBlob.size === 0}
+                >
                   Save Recording
                 </button>
-                <button onClick={() => setAudioBlob(null)} className="btn btn-secondary">
+                <button 
+                  onClick={() => {
+                    setAudioBlob(null)
+                    setRecordingTime(0)
+                  }} 
+                  className="btn btn-secondary"
+                >
                   Discard
                 </button>
               </div>
+              {audioBlob && (
+                <p style={{ 
+                  marginTop: '0.5rem', 
+                  fontSize: '0.85rem', 
+                  color: 'var(--text-muted)',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
+                }}>
+                  Size: {(audioBlob.size / 1024).toFixed(2)} KB
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -236,21 +306,8 @@ function AudioRecordings() {
         ) : (
           <div className="grid grid-2">
             {recordings.map((recording) => (
-              <div key={recording.id} className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <h3 style={{ marginBottom: 0, flex: 1 }}>{recording.title || 'Untitled Recording'}</h3>
-                  <button
-                    onClick={() => handleDelete(recording.id)}
-                    className="btn btn-danger"
-                    style={{
-                      padding: '0.5rem 1rem',
-                      fontSize: '0.875rem',
-                      marginLeft: '1rem'
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
+              <div key={recording.id} className="card" style={{ position: 'relative' }}>
+                <h3 style={{ marginBottom: '0.75rem' }}>{recording.title || 'Untitled Recording'}</h3>
                 <p style={{
                   color: 'var(--text-muted)',
                   marginBottom: '1.25rem',
@@ -266,15 +323,28 @@ function AudioRecordings() {
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
                   }}>{recording.description}</p>
                 )}
-                <audio
+                <AuthenticatedAudio
                   key={`audio-${recording.id}-${refreshKey}`}
-                  controls
-                  src={`http://localhost:8000/api/audio/${recording.id}?v=${refreshKey}&t=${Date.now()}`}
+                  audioId={recording.id}
                   onPlay={() => setCurrentPlaying(recording.id)}
                   onPause={() => setCurrentPlaying(null)}
-                  style={{ width: '100%', marginTop: '1rem' }}
+                  style={{ width: '100%', marginTop: '1rem', marginBottom: '2.5rem' }}
                   preload="metadata"
                 />
+                <button
+                  onClick={() => handleDelete(recording.id)}
+                  className="btn btn-danger"
+                  style={{
+                    position: 'absolute',
+                    bottom: '1rem',
+                    right: '1rem',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.7rem',
+                    minWidth: 'auto'
+                  }}
+                >
+                  Delete
+                </button>
               </div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { format } from 'date-fns'
+import AuthenticatedImage from '../components/AuthenticatedImage'
 import './PhotoGallery.css'
 
 function PhotoGallery() {
@@ -15,6 +16,7 @@ function PhotoGallery() {
     fetchPhotos()
     fetchAlbums()
   }, [])
+
 
   const fetchPhotos = async () => {
     try {
@@ -53,7 +55,7 @@ function PhotoGallery() {
       }
     }
 
-    fetchPhotos()
+    await fetchPhotos()
     setShowUpload(false)
   }
 
@@ -140,9 +142,10 @@ function PhotoGallery() {
               className="photo-item"
               onClick={() => setSelectedPhoto(photo)}
             >
-              <img
-                src={`http://localhost:8000/api/photos/${photo.id}`}
+              <AuthenticatedImage
+                photoId={photo.id}
                 alt={photo.title || 'Photo'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
           ))}
@@ -156,8 +159,8 @@ function PhotoGallery() {
               <h2 style={{ color: 'var(--primary)' }}>{selectedPhoto.title || 'Photo'}</h2>
               <button className="close-btn" onClick={() => setSelectedPhoto(null)}>×</button>
             </div>
-            <img
-              src={`http://localhost:8000/api/photos/${selectedPhoto.id}`}
+            <AuthenticatedImage
+              photoId={selectedPhoto.id}
               alt={selectedPhoto.title || 'Photo'}
               style={{
                 maxWidth: '100%',

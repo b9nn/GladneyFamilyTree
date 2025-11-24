@@ -41,8 +41,56 @@ function Files() {
     fetchFiles()
   }
 
-  const handleDownload = (file) => {
-    window.open(`http://localhost:8000/api/files/${file.id}`, '_blank')
+  const handleDownload = async (file) => {
+    try {
+      console.log('Downloading file:', file.id, file.filename)
+      
+      // Fetch the file with authentication
+      const response = await axios.get(`/api/files/${file.id}`, {
+        responseType: 'blob',
+      })
+      
+      console.log('File fetched, size:', response.data.size)
+      
+      // Determine the filename - try to preserve original extension
+      let downloadFilename = file.title || file.filename || 'download'
+      
+      // If the stored filename is a UUID, try to get extension from file_type
+      if (file.filename && file.filename.includes('-') && file.filename.length > 30) {
+        // Likely a UUID filename, try to extract extension from file_type or use original title
+        if (file.file_type) {
+          const extension = file.file_type.split('/')[1] || ''
+          if (extension && !downloadFilename.includes('.')) {
+            downloadFilename = `${downloadFilename}.${extension}`
+          }
+        }
+      }
+      
+      // Create a blob URL and trigger download
+      const blob = new Blob([response.data])
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = downloadFilename
+      document.body.appendChild(link)
+      link.click()
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      }, 100)
+      
+      console.log('Download initiated for:', downloadFilename)
+    } catch (error) {
+      console.error('Failed to download file:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      alert(`Failed to download file: ${error.response?.data?.detail || error.message || 'Unknown error'}`)
+    }
   }
 
   const getFileIcon = (fileType) => {
