@@ -14,7 +14,15 @@
       "Bash(python:*)",
       "Bash(cat:*)",
       "Bash(kill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(/usr/local/bin/npm run dev)",
+      "Bash(/Library/Developer/CommandLineTools/usr/bin/python3:*)",
+      "Bash(/usr/local/bin/node /usr/local/bin/npm run dev:*)",
+      "Bash(/usr/local/bin/python3:*)",
+      "Bash(PATH=\"/usr/local/bin:$PATH\" npm run dev:*)",
+      "Bash(git stash:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

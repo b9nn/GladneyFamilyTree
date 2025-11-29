@@ -40,10 +40,10 @@ function Dashboard() {
         ...filesRes.data.map(item => ({ ...item, type: 'file' }))
       ]
 
-      // Sort by created_at (newest to oldest) and take top 4
+      // Sort by created_at (newest to oldest) and take top 5
       const sortedRecent = allRecentItems
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 4)
+        .slice(0, 5)
 
       // Store the sorted items in unified state
       setRecentItems(sortedRecent)
