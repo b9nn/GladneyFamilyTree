@@ -57,6 +57,56 @@ async def startup_event():
     init_db()
 
 
+# ONE-TIME SETUP ENDPOINT - Remove after first use!
+@app.post("/api/setup-admin")
+def setup_admin(
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    full_name: str = Form(...),
+    secret_key: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """
+    ONE-TIME SETUP: Create the first admin user.
+    SECURITY: Set SECRET_SETUP_KEY environment variable in Railway.
+    Remove this endpoint after creating your admin account!
+    """
+    import os
+
+    # Check secret key (set this in Railway environment variables)
+    expected_key = os.getenv("SECRET_SETUP_KEY", "CHANGE_ME_IN_RAILWAY")
+    if secret_key != expected_key:
+        raise HTTPException(status_code=403, detail="Invalid setup key")
+
+    # Check if any admin already exists
+    existing_admin = db.query(models.User).filter(models.User.is_admin == True).first()
+    if existing_admin:
+        raise HTTPException(status_code=400, detail="Admin user already exists. This endpoint is disabled.")
+
+    # Check if user already exists
+    existing_user = db.query(models.User).filter(
+        (models.User.username == username) | (models.User.email == email)
+    ).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail=f"User with username '{username}' or email '{email}' already exists")
+
+    # Create admin user
+    user = models.User(
+        username=username,
+        email=email,
+        hashed_password=get_password_hash(password),
+        full_name=full_name,
+        is_admin=True,
+        is_active=True
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {"message": f"Admin user '{username}' created successfully! IMPORTANT: Remove this endpoint now for security."}
+
+
 # Invite code routes (admin only)
 @app.post("/api/admin/invite-codes", response_model=schemas.InviteCode)
 def create_invite_code(
