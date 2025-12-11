@@ -554,7 +554,7 @@ function PhotoGallery() {
 
           {/* Chronological Photos Section - Show first */}
           <div style={{ marginBottom: '4rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', maxWidth: '1200px', margin: '0 auto 2rem auto' }}>
               <h2 style={{ fontSize: '2rem', color: 'var(--primary)' }}>Photos by Date ({photos.length})</h2>
             </div>
             {photos.length === 0 ? (

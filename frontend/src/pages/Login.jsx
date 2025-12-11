@@ -299,6 +299,7 @@ function Login() {
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
                 className="link-button"
+                style={isLogin ? { fontSize: '1.2rem' } : {}}
               >
                 {isLogin ? 'Register' : 'Login'}
               </button>
