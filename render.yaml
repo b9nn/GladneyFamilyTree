@@ -1,20 +1,29 @@
 services:
-  # FastAPI Backend
+  # Full-Stack App (Frontend + Backend)
   - type: web
-    name: gladney-family-backend
+    name: gladney-family-memories
     env: python
     region: oregon
     plan: free
-    buildCommand: "pip install -r backend/requirements.txt"
+    buildCommand: |
+      # Install backend dependencies
+      pip install -r backend/requirements.txt
+      # Install Node.js and build frontend
+      curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+      apt-get install -y nodejs
+      cd frontend
+      npm install
+      npm run build
+      cd ..
     startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///./tag_diary.db
+        value: sqlite:////data/tag_diary.db
       - key: PYTHON_VERSION
         value: 3.11.0
     disk:
       name: data
-      mountPath: /opt/render/project/src/backend
+      mountPath: /data
       sizeGB: 1

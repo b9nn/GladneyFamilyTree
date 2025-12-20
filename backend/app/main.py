@@ -52,8 +52,16 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 (UPLOAD_DIR / "files").mkdir(exist_ok=True)
 (UPLOAD_DIR / "documents").mkdir(exist_ok=True)
 
-# Serve static files
+# Serve uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Serve frontend static files (built React app)
+FRONTEND_BUILD_DIR = Path("../frontend/dist")
+if FRONTEND_BUILD_DIR.exists():
+    print(f"[STARTUP] Serving frontend from {FRONTEND_BUILD_DIR.absolute()}")
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_BUILD_DIR / "assets")), name="assets")
+else:
+    print(f"[STARTUP] Warning: Frontend build directory not found at {FRONTEND_BUILD_DIR.absolute()}")
 
 
 @app.on_event("startup")
@@ -1709,4 +1717,24 @@ def delete_file(
 
     print(f"[DELETE FILE] Successfully deleted file {file_id}")
     return {"message": "File deleted successfully"}
+
+
+# Catch-all route to serve React app for client-side routing
+# This MUST be at the end of all routes
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Serve the React frontend for all non-API routes"""
+    # If path starts with /api, it's already handled above, return 404
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    # Serve index.html for all other routes (React Router will handle them)
+    index_path = FRONTEND_BUILD_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    else:
+        raise HTTPException(
+            status_code=503,
+            detail="Frontend not built. Run 'cd frontend && npm run build' first."
+        )
 

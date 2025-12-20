@@ -4,12 +4,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
 
-  // Base path - use '/' for custom domain (mrtag.com)
+  // Base path - use '/' for root domain
   base: '/',
 
-  // Output the production build into /docs (so GitHub Pages can serve it)
+  // Output the production build into /dist
   build: {
-    outDir: '../docs',
+    outDir: 'dist',
     emptyOutDir: true
   },
 
