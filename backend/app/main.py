@@ -529,6 +529,39 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
+@app.post("/api/auth/admin/create-user", response_model=schemas.User)
+def admin_create_user(
+    user: schemas.UserCreateAdmin,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin)
+):
+    """Admin-only endpoint to create a user without an invite code"""
+    # Check if username or email already exists
+    existing_user = db.query(models.User).filter(
+        (models.User.username == user.username) | (models.User.email == user.email)
+    ).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Username or email already registered"
+        )
+
+    # Create the user
+    db_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=get_password_hash(user.password),
+        full_name=user.full_name,
+        is_admin=user.is_admin if hasattr(user, 'is_admin') else False
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user
+
+
 @app.get("/api/auth/health")
 def auth_health(db: Session = Depends(get_db)):
     """Health check endpoint to verify database and user count"""
