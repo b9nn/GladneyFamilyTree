@@ -21,9 +21,12 @@ if "sqlite" in DATABASE_URL:
                 # Fall back to current directory
                 DATABASE_URL = "sqlite:///./tag_diary.db"
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
+# Create engine with appropriate settings for SQLite or PostgreSQL
+if "sqlite" in DATABASE_URL:
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    # PostgreSQL - no special connect_args needed
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

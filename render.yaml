@@ -15,10 +15,6 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:////data/tag_diary.db
+        sync: false
       - key: PYTHON_VERSION
         value: 3.11.0
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
