@@ -562,6 +562,44 @@ def admin_create_user(
     return db_user
 
 
+@app.post("/api/auth/admin/promote-user/{user_id}", response_model=schemas.User)
+def promote_user_to_admin(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin)
+):
+    """Admin-only endpoint to promote a user to admin status"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_admin = True
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.post("/api/auth/admin/demote-user/{user_id}", response_model=schemas.User)
+def demote_user_from_admin(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin)
+):
+    """Admin-only endpoint to remove admin status from a user"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent demoting yourself
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot demote yourself")
+
+    user.is_admin = False
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 @app.get("/api/auth/health")
 def auth_health(db: Session = Depends(get_db)):
     """Health check endpoint to verify database and user count"""
