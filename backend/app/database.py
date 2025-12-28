@@ -6,6 +6,12 @@ from pathlib import Path
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tag_diary.db")
 
+# Convert postgresql:// to postgresql+psycopg:// for psycopg3
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+
 # Ensure the database directory exists for SQLite
 if "sqlite" in DATABASE_URL:
     # Extract the file path from the SQLite URL
