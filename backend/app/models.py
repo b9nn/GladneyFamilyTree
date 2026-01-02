@@ -154,7 +154,7 @@ class File(Base):
     title = Column(String)
     description = Column(Text)
     file_type = Column(String)
-    source = Column(String, default="vignettes")  # "vignettes" or "files"
+    source = Column(String, default="files")  # "vignettes" or "files"
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

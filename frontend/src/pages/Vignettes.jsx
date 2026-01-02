@@ -579,9 +579,6 @@ function Vignettes() {
               ) : editingFileId === item.id ? (
                 // File Edit Mode
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem', textAlign: 'center' }}>
-                    {getFileIcon(item.file_type)}
-                  </div>
                   <div style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                       Title

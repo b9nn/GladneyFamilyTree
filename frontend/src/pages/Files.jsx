@@ -247,9 +247,6 @@ function Files() {
               {editingId === file.id ? (
                 // Edit mode
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem', textAlign: 'center' }}>
-                    {getFileIcon(file.file_type)}
-                  </div>
                   <div style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                       Title
@@ -305,11 +302,6 @@ function Files() {
               ) : (
                 // View mode
                 <>
-                  {user?.is_admin && (
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-                      {getFileIcon(file.file_type)}
-                    </div>
-                  )}
                   <h3 style={{ marginBottom: '0.75rem', fontSize: '1.25rem' }}>{file.title || file.filename}</h3>
                   <p style={{
                     color: 'var(--text-muted)',
