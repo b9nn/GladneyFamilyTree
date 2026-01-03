@@ -28,30 +28,48 @@ function Files() {
   }
 
   const handleFileUpload = async (e) => {
-    const uploadedFiles = Array.from(e.target.files)
-    console.log('[FILES] Uploading files:', uploadedFiles.length)
+    try {
+      console.log('[FILES] handleFileUpload triggered')
+      console.log('[FILES] Event:', e)
+      console.log('[FILES] Event target:', e.target)
+      console.log('[FILES] Files:', e.target.files)
 
-    for (const file of uploadedFiles) {
-      console.log('[FILES] Uploading file:', file.name, file.type, file.size)
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('title', file.name)
-      formData.append('source', 'files')
+      const uploadedFiles = Array.from(e.target.files)
+      console.log('[FILES] Uploading files:', uploadedFiles.length)
 
-      try {
-        const response = await axios.post('/api/files', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        console.log('[FILES] Upload successful:', response.data)
-      } catch (error) {
-        console.error('[FILES] Failed to upload file:', error)
-        console.error('[FILES] Error details:', error.response?.data)
-        alert(`Failed to upload ${file.name}: ${error.response?.data?.detail || error.message}`)
+      if (uploadedFiles.length === 0) {
+        console.log('[FILES] No files selected')
+        return
       }
-    }
 
-    console.log('[FILES] Refreshing file list')
-    fetchFiles()
+      for (const file of uploadedFiles) {
+        console.log('[FILES] Uploading file:', file.name, file.type, file.size)
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('title', file.name)
+        formData.append('source', 'files')
+
+        try {
+          const response = await axios.post('/api/files', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+          console.log('[FILES] Upload successful:', response.data)
+        } catch (error) {
+          console.error('[FILES] Failed to upload file:', error)
+          console.error('[FILES] Error details:', error.response?.data)
+          alert(`Failed to upload ${file.name}: ${error.response?.data?.detail || error.message}`)
+        }
+      }
+
+      console.log('[FILES] Refreshing file list')
+      await fetchFiles()
+
+      // Reset the file input so the same file can be uploaded again
+      e.target.value = ''
+    } catch (error) {
+      console.error('[FILES] Error in handleFileUpload:', error)
+      alert(`Upload error: ${error.message}`)
+    }
   }
 
   const handleDownload = async (file) => {
