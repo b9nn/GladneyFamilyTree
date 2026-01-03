@@ -364,9 +364,10 @@ def get_active_background(db: Session = Depends(get_db)):
     if not bg:
         return None
 
+    # Return the actual file_path which contains either R2 URL or local path
     return {
         "id": bg.id,
-        "url": f"/uploads/photos/{bg.filename}"
+        "url": bg.file_path if bg.file_path.startswith('http') else f"/uploads/photos/{bg.filename}"
     }
 
 
