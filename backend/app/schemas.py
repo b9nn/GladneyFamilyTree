@@ -181,6 +181,11 @@ class PasswordReset(BaseModel):
     new_password: str
 
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class InviteCodeCreate(BaseModel):
     email: Optional[EmailStr] = None
     expires_in_days: Optional[int] = 30

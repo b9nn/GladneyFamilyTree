@@ -769,6 +769,27 @@ def reset_password(
     return {"message": "Password has been reset successfully"}
 
 
+@app.post("/api/auth/change-password")
+def change_password(
+    password_data: schemas.PasswordChange,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change password for currently logged-in user"""
+    # Verify current password
+    if not authenticate_user(db, current_user.username, password_data.current_password):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+
+    # Update to new password
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    db.commit()
+
+    return {"message": "Password changed successfully"}
+
+
 # Vignettes routes
 @app.post("/api/vignettes", response_model=schemas.Vignette)
 def create_vignette(
