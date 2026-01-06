@@ -10,6 +10,7 @@ import PhotoGallery from './pages/PhotoGallery'
 import AudioRecordings from './pages/AudioRecordings'
 import Files from './pages/Files'
 import AdminPanel from './pages/AdminPanel'
+import ChangePassword from './pages/ChangePassword'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import './App.css'
 
@@ -87,6 +88,14 @@ function AppRoutes() {
           <AdminRoute>
             <AdminPanel />
           </AdminRoute>
+        }
+      />
+      <Route
+        path="/change-password"
+        element={
+          <ProtectedRoute>
+            <ChangePassword />
+          </ProtectedRoute>
         }
       />
     </Routes>
