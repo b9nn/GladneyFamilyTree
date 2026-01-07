@@ -28,6 +28,13 @@ function AdminPanel() {
   const [mistaggedFiles, setMistaggedFiles] = useState([])
   const [fixingFiles, setFixingFiles] = useState(false)
 
+  // Password change state
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordChanging, setPasswordChanging] = useState(false)
+
   useEffect(() => {
     fetchInviteCodes()
     fetchBackgroundImage()
@@ -236,6 +243,42 @@ function AdminPanel() {
     return new Date(expiresAt) < new Date()
   }
 
+  const changePassword = async (e) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match')
+      return
+    }
+
+    if (newPassword.length < 4) {
+      setError('Password must be at least 4 characters long')
+      return
+    }
+
+    setPasswordChanging(true)
+
+    try {
+      await axios.post('/api/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword
+      })
+
+      setSuccess('Password changed successfully!')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowPasswordForm(false)
+    } catch (err) {
+      console.error('Failed to change password:', err)
+      setError(err.response?.data?.detail || 'Failed to change password')
+    } finally {
+      setPasswordChanging(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="admin-panel">
@@ -251,16 +294,78 @@ function AdminPanel() {
       <div className="container">
         <div className="admin-header">
           <h1>Admin Panel</h1>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowCreateForm(!showCreateForm)}
-          >
-            {showCreateForm ? 'Cancel' : 'Create Invite Code'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowCreateForm(!showCreateForm)}
+            >
+              {showCreateForm ? 'Cancel' : 'Create Invite Code'}
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+            >
+              {showPasswordForm ? 'Cancel' : 'Change Password'}
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
+
+        {showPasswordForm && (
+          <div className="create-form-card">
+            <h2>Change Your Password</h2>
+            <form onSubmit={changePassword}>
+              <div className="form-group">
+                <label>Current Password</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                  disabled={passwordChanging}
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  disabled={passwordChanging}
+                  minLength={4}
+                  autoComplete="new-password"
+                />
+                <small>At least 4 characters</small>
+              </div>
+
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={passwordChanging}
+                  minLength={4}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={passwordChanging}
+              >
+                {passwordChanging ? 'Changing Password...' : 'Change Password'}
+              </button>
+            </form>
+          </div>
+        )}
 
         {showCreateForm && (
           <div className="create-form-card">
