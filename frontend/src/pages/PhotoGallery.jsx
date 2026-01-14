@@ -54,7 +54,13 @@ function PhotoGallery() {
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files)
 
-    for (const file of files) {
+    if (files.length === 0) return
+
+    console.log(`[PHOTO UPLOAD] Starting upload of ${files.length} file(s)`)
+    setLoading(true)
+
+    // Upload all files in parallel for better performance
+    const uploadPromises = files.map(async (file) => {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('title', file.name)
@@ -63,12 +69,27 @@ function PhotoGallery() {
         await axios.post('/api/photos', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
+        console.log(`[PHOTO UPLOAD] Successfully uploaded: ${file.name}`)
+        return { success: true, name: file.name }
       } catch (error) {
-        console.error('Failed to upload photo:', error)
+        console.error(`[PHOTO UPLOAD] Failed to upload ${file.name}:`, error)
+        return { success: false, name: file.name, error }
       }
+    })
+
+    const results = await Promise.all(uploadPromises)
+
+    const successCount = results.filter(r => r.success).length
+    const failCount = results.filter(r => !r.success).length
+
+    console.log(`[PHOTO UPLOAD] Upload complete: ${successCount} succeeded, ${failCount} failed`)
+
+    if (failCount > 0) {
+      alert(`Uploaded ${successCount} photo(s) successfully. ${failCount} photo(s) failed to upload.`)
     }
 
     await fetchPhotos()
+    setLoading(false)
     setShowUpload(false)
   }
 
