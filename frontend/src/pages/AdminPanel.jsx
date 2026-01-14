@@ -196,11 +196,8 @@ function AdminPanel() {
       })
 
       console.log('[ADMIN] Background upload successful')
-      setSuccess('Background image uploaded successfully!')
+      setSuccess('Background image uploaded successfully! Refresh the page to see the new background.')
       fetchBackgroundImage()
-
-      // Reload the page to show new background
-      setTimeout(() => window.location.reload(), 1500)
     } catch (err) {
       console.error('[ADMIN] Failed to upload background:', err)
       setError('Failed to upload background image')
@@ -216,11 +213,8 @@ function AdminPanel() {
 
     try {
       await axios.delete(`/api/admin/background/${backgroundImage.id}`)
-      setSuccess('Background image removed')
+      setSuccess('Background image removed! Refresh the page to see the change.')
       setBackgroundImage(null)
-
-      // Reload the page to remove background
-      setTimeout(() => window.location.reload(), 1500)
     } catch (err) {
       console.error('Failed to delete background:', err)
       setError('Failed to remove background image')
