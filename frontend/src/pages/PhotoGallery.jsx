@@ -489,36 +489,6 @@ function PhotoGallery() {
                                 }}></div>
                               )}
                               <div style={{ position: 'relative', zIndex: 1 }}>
-                                {user?.is_admin && (
-                                  <label
-                                    style={{
-                                      position: 'absolute',
-                                      top: '-0.5rem',
-                                      right: '-0.5rem',
-                                      backgroundColor: 'var(--primary)',
-                                      color: 'white',
-                                      borderRadius: '50%',
-                                      width: '2rem',
-                                      height: '2rem',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      cursor: 'pointer',
-                                      fontSize: '0.9rem',
-                                      zIndex: 10
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    🖼️
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => handleUploadAlbumBackground(album.id, e)}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  </label>
-                                )}
                                 <h3 style={{ marginBottom: '0.5rem', fontSize: '1.1rem' }}>{album.name}</h3>
                                 {album.description && (
                                   <p style={{
