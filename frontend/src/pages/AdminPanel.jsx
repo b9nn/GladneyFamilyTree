@@ -35,6 +35,10 @@ function AdminPanel() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordChanging, setPasswordChanging] = useState(false)
 
+  // Username change state
+  const [editingUsername, setEditingUsername] = useState(null)
+  const [newUsername, setNewUsername] = useState('')
+
   useEffect(() => {
     fetchInviteCodes()
     fetchBackgroundImage()
@@ -273,6 +277,32 @@ function AdminPanel() {
     }
   }
 
+  const updateUsername = async (userId, currentUsername) => {
+    if (!newUsername.trim()) {
+      setError('Username cannot be empty')
+      return
+    }
+
+    if (newUsername === currentUsername) {
+      setError('New username is the same as current username')
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('new_username', newUsername)
+
+      await axios.patch(`/api/admin/users/${userId}/username`, formData)
+      setSuccess(`Username changed from '${currentUsername}' to '${newUsername}'`)
+      setEditingUsername(null)
+      setNewUsername('')
+      fetchRegisteredUsers()
+    } catch (err) {
+      console.error('Failed to update username:', err)
+      setError(err.response?.data?.detail || 'Failed to update username')
+    }
+  }
+
   if (loading) {
     return (
       <div className="admin-panel">
@@ -489,9 +519,57 @@ function AdminPanel() {
               {registeredUsers.map((registeredUser) => (
                 <div key={registeredUser.id} className="card">
                   <div style={{ marginBottom: '1rem' }}>
-                    <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--primary)' }}>
-                      {registeredUser.username}
-                    </h3>
+                    {editingUsername === registeredUser.id ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <input
+                          type="text"
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value)}
+                          placeholder="New username"
+                          style={{
+                            flex: 1,
+                            padding: '0.5rem',
+                            fontSize: '1rem',
+                            border: '2px solid var(--primary)',
+                            borderRadius: '6px'
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => updateUsername(registeredUser.id, registeredUser.username)}
+                          className="btn btn-primary"
+                          style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingUsername(null)
+                            setNewUsername('')
+                          }}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h3 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)' }}>
+                          {registeredUser.username}
+                        </h3>
+                        <button
+                          onClick={() => {
+                            setEditingUsername(registeredUser.id)
+                            setNewUsername(registeredUser.username)
+                          }}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
                     {registeredUser.is_admin ? (
                       <span className="badge badge-used">Admin</span>
                     ) : (
